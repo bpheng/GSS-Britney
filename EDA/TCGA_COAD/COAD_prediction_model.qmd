@@ -34,9 +34,9 @@ meta_train <- read.csv("data/meta_train_all.csv", row.names = 1) # 261 samples x
 
 ## Convert character variables into the `factor` data type
 
-#factorTb <- charTb
+factorTb <- charTb
 
-factorTb <- meta_train
+#factorTb <- meta_train
 
 factorTb[sapply(factorTb, is.character)] <- lapply(factorTb[sapply(factorTb, is.character)], factor)
 ```

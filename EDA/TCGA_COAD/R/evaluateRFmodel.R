@@ -41,7 +41,7 @@ calc_auc <- function(data, labels, indices, p, aucOnly) {
         method = "rf",
         metric = train_metric,
         trControl = trainControl(
-            method = "cv",
+            method = "oob",
             number = 5,
             search = "random"),
         tuneLength = 5
