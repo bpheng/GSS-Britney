@@ -434,12 +434,15 @@ ztable(wtest_coad_sig_wvalue) %>%
 #Normal
 # NONE
 ```
-
-```{r}
 ## Function to Display Categorical Attributes' Score Plots
- 
-# Cancer
-graph_categorical <- function(RAV1, RAV2, binaryFactor.df, sampleScore.df, phenotype, graph_title = "Score Plot", legend_title = "Legend") {
+```{r}
+graph_categorical <- function(RAV1, RAV2, factor.df, sampleScore.df, phenotype, graph_title = "Score Plot", legend_title = "Legend") {
+  
+  # Sanity Check: phenotype is in factor.df
+  if(nlevels(factor.df[[phenotype]]) == 0) {
+    print("Phenotype is not in provided factor dataframe")
+  }
+  
   sampleScore1 <- paste0("RAV", RAV1)
   sampleScore2 <- paste0("RAV", RAV2)
 
@@ -447,7 +450,7 @@ graph_categorical <- function(RAV1, RAV2, binaryFactor.df, sampleScore.df, pheno
   colnames(new_df)[1] <- "sampleScore1"
   colnames(new_df)[2] <- "sampleScore2"
 
-  new_df <- data.frame(new_df, binaryFactor.df)
+  new_df <- data.frame(new_df, factor.df)
   plot_data <- new_df[which(!is.na(factor(new_df[[phenotype]]))),] #Filter out rows of the phenotype that are N/A
   #print(plot_data[[phenotype]])
 
@@ -472,8 +475,8 @@ print(pA)
 
 ```{r warning=FALSE}
 graph_categorical(834, 1166, binary_factor_2, sampleScore_sub,
-                  "patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status"
-                  , "Score Plot for Microsatellite Status", "Microsatellite Status")
+                  "patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status", 
+                  "Score Plot for Microsatellite Status", "Microsatellite Status")
 
 ```
 
