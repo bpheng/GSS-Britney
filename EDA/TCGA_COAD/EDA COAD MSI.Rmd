@@ -71,15 +71,15 @@ coad_normal <- colData(coad_rna_normal)
 table(coad_cancer$patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status)
 table(coad_normal$patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status)
 
-normal_tb <- coad_normal %>% 
-  as.data.frame() %>%
-  select(patientID, patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status)
-
-cancer_tb <- coad_cancer %>% 
-  as.data.frame() %>%
-  select(patientID, patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status)
-
-combined_tb <- inner_join(normal_tb, cancer_tb, by="patientID")
+# normal_tb <- coad_normal %>% 
+#   as.data.frame() %>%
+#   select(patientID, patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status)
+# 
+# cancer_tb <- coad_cancer %>% 
+#   as.data.frame() %>%
+#   select(patientID, patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status)
+# 
+# combined_tb <- inner_join(normal_tb, cancer_tb, by="patientID")
 ```
 
 # heatmapTable: COAD
@@ -185,6 +185,7 @@ numTb_2 <- numTb_2[-addToFactors_2]
 # Calculate validation scores
 # Cancer
 sampleScore <- calculateScore(coad_rna_cancer, RAVmodel)
+coad_rna_cancer@colData@listData["patient.MSI_instab"]
 
 # Normal
 sampleScore_2 <- calculateScore(coad_rna_normal, RAVmodel)
@@ -336,11 +337,11 @@ for (i in seq_len(ncol(binary_factor_norm))) {
   x <- summary(binary_factor_norm[,i])[1:2]
   
   if (all(x > 1)) {
-    print(x)
+    #print(x)
   } else {
     remove_index_2 <- c(remove_index_2, i)
-    print(x)
-    print(paste("index", i, "does not have enough observations"))
+    #print(x)
+    #print(paste("index", i, "does not have enough observations"))
   }
 }
 
@@ -438,27 +439,26 @@ ztable(wtest_coad_sig_wvalue) %>%
 ## Function to Display Categorical Attributes' Score Plots
  
 # Cancer
-graph_categorical <- function(a, b, c, d = 'Legend') {
-  sampleScore1 <- paste0('RAV', a)
-  sampleScore2 <- paste0('RAV', b)
+graph_categorical <- function(RAV1, RAV2, binaryFactor.df, sampleScore.df, phenotype, graph_title = "Score Plot", legend_title = "Legend") {
+  sampleScore1 <- paste0("RAV", RAV1)
+  sampleScore2 <- paste0("RAV", RAV2)
 
-  plot_data <- sampleScore_sub[, c(sampleScore1, sampleScore2)]
-  colnames(plot_data)[1] <- "sampleScore1"
-  colnames(plot_data)[2] <- "sampleScore2"
+  new_df <- sampleScore.df[, c(sampleScore1, sampleScore2)]
+  colnames(new_df)[1] <- "sampleScore1"
+  colnames(new_df)[2] <- "sampleScore2"
 
-  plot_data <- data.frame(plot_data, binary_factor_2)
-  plot_data <- plot_data[which(!is.na(factor(plot_data[[c]]))),]
-  # print(plot_data)
+  new_df <- data.frame(new_df, binaryFactor.df)
+  plot_data <- new_df[which(!is.na(factor(new_df[[phenotype]]))),] #Filter out rows of the phenotype that are N/A
+  #print(plot_data[[phenotype]])
 
-  colors <- gg_color_hue(length(unique(plot_data[[c]])))
+  colors <- gg_color_hue(length(unique(plot_data[[phenotype]]))) # Count number of factor levels excluding NA
   colors.toplot <- c(colors)
 
   pA <- ggplot(plot_data,
-             aes(x = sampleScore1, y = sampleScore2, color = plot_data[[c]]
-                 )) +
+             aes(x = sampleScore1, y = sampleScore2, color = plot_data[[phenotype]])) +
         geom_point() +
-        #ggtitle('Score Plot for Gender') +
-        scale_color_manual(values = colors.toplot, name = d) +
+        labs(title = graph_title) +
+        scale_color_manual(values = colors.toplot, name = legend_title) +
         theme_bw() +
         theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
@@ -471,12 +471,14 @@ print(pA)
 ```
 
 ```{r warning=FALSE}
-graph_categorical(834, 1166, 'patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status', 'Microsatellite Status')
+graph_categorical(834, 1166, binary_factor_2, sampleScore_sub,
+                  "patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status"
+                  , "Score Plot for Microsatellite Status", "Microsatellite Status")
 
 ```
 
 ```{r}
-graph_categorical(834, 188, 'patient.braf_gene_analysis_result', 'BRAF Gene Analysis Result')
+graph_categorical(834, 188, 'patient.braf_gene_analysis_result', binary_factor_2, sampleScore_sub,'BRAF Gene Analysis Result')
 ```
 
 ```{r}
@@ -485,12 +487,15 @@ graph_categorical_2 <- function(a, b, c, d = 'Legend') {
   sampleScore1 <- paste0('RAV', a)
   sampleScore2 <- paste0('RAV', b)
 
-  plot_data <- sampleScore_sub_2[, c(sampleScore1, sampleScore2)]
+  plot_data <- sampleScore_sub_2[, c(sampleScore1, sampleScore2)] #new function parameters for sampleScore_sub_2, binary_factor_norm_2
   colnames(plot_data)[1] <- "sampleScore1"
   colnames(plot_data)[2] <- "sampleScore2"
 
+  #Sanity check: If RAVs are not a part
+  # Sanity Check if the binary attribute exists (input c)
   plot_data <- data.frame(plot_data, binary_factor_norm_2)
   plot_data <- plot_data[which(!is.na(factor(plot_data[[c]]))),]
+    # Sanity check: If the new metadata column does not exist, it still plots with no points
   # print(plot_data)
 
   colors <- gg_color_hue(length(unique(plot_data[[c]])))
@@ -516,5 +521,10 @@ print(pA)
 ```{r}
 graph_categorical_2(833, 324, 'patient.microsatellite_instability_test_results.microsatellite_instability_test_result.mononucleotide_and_dinucleotide_marker_panel_analysis_status', 'Microsatellite Status')
 ```
+
+```{r}
+graph_categorical(833, 324, 'patient.MSI_instab', 'Microsatellite Status')
+```
+
 
 
