@@ -1,0 +1,149 @@
+---
+title: "Validated RAVs"
+author: "Britney Pheng"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+### Load packages
+
+```{r packages, warning=FALSE, message=FALSE}
+suppressPackageStartupMessages({
+  # BiocManager
+  library(GenomicSuperSignature)
+  library(curatedTCGAData)
+  library(MultiAssayExperiment)
+  library(TCGAutils)
+  library(ComplexHeatmap)
+  
+  # CRAN
+  library(tidyverse) # includes dplyr, ggplot2, magrittr, tidyr
+  library(magick)
+  library(wordcloud)
+  library(ztable)
+  library(metafolio)
+})
+```
+
+### Load RAVmodel
+
+```{r message=FALSE, warning=FALSE}
+RAVmodel <- getModel('C2', load=TRUE)
+```
+
+### Select COAD RNA metadata
+
+```{r message=FALSE, warning=FALSE}
+coad <- curatedTCGAData(diseaseCode = 'COAD',
+                        assays = 'RNA*',
+                        version = '2.0.1',
+                        dry.run = FALSE)
+
+coad_rna <- getWithColData(coad,
+                            'COAD_RNASeq2Gene-20160128')
+
+assay(coad_rna) <- log2(assay(coad_rna) + 1)
+
+## Parse out cancer vs normal samples
+sampleTables(coad)
+coad2 <- TCGAsplitAssays(coad, c("01", "11"))
+
+coad_rna_cancer <- getWithColData(coad2,
+                           '01_COAD_RNASeq2Gene-20160128')
+assay(coad_rna_cancer) <- log2(assay(coad_rna_cancer) + 1)
+coad_cancer <- colData(coad_rna_cancer)
+
+
+```
+
+COAD, BRCA, HNSC, LUSC
+```{r}
+brca <- curatedTCGAData(diseaseCode = 'BRCA',
+                        assays = 'RNA*',
+                        version = '2.0.1',
+                        dry.run = FALSE)
+
+brca_rna <- getWithColData(brca,
+                            'BRCA_RNASeq2Gene-20160128')
+
+assay(brca_rna) <- log2(assay(brca_rna) + 1)
+
+## Parse out cancer vs normal samples
+sampleTables(brca)
+brca2 <- TCGAsplitAssays(brca, c("01", "11"))
+
+brca_rna_cancer <- getWithColData(brca2,
+                           '01_BRCA_RNASeq2Gene-20160128')
+assay(brca_rna_cancer) <- log2(assay(brca_rna_cancer) + 1)
+brca_cancer <- colData(brca_rna_cancer)
+```
+```{r}
+hnsc <- curatedTCGAData(diseaseCode = 'HNSC',
+                        assays = 'RNA*',
+                        version = '2.0.1',
+                        dry.run = FALSE)
+
+hnsc_rna <- getWithColData(hnsc,
+                            'HNSC_RNASeq2Gene-20160128')
+
+assay(hnsc_rna) <- log2(assay(hnsc_rna) + 1)
+
+## Parse out cancer vs normal samples
+sampleTables(hnsc)
+hnsc2 <- TCGAsplitAssays(hnsc, c("01", "11"))
+
+hnsc_rna_cancer <- getWithColData(hnsc2,
+                           '01_HNSC_RNASeq2Gene-20160128')
+assay(hnsc_rna_cancer) <- log2(assay(hnsc_rna_cancer) + 1)
+hnsc_cancer <- colData(hnsc_rna_cancer)
+```
+
+```{r}
+lusc <- curatedTCGAData(diseaseCode = 'LUSC',
+                        assays = 'RNA*',
+                        version = '2.0.1',
+                        dry.run = FALSE)
+
+lusc_rna <- getWithColData(lusc,
+                            'LUSC_RNASeq2Gene-20160128')
+
+assay(lusc_rna) <- log2(assay(lusc_rna) + 1)
+
+## Parse out cancer vs normal samples
+sampleTables(lusc)
+lusc2 <- TCGAsplitAssays(lusc, c("01", "11"))
+
+lusc_rna_cancer <- getWithColData(lusc2,
+                           '01_LUSC_RNASeq2Gene-20160128')
+assay(lusc_rna_cancer) <- log2(assay(lusc_rna_cancer) + 1)
+lusc_cancer <- colData(lusc_rna_cancer)
+```
+
+
+```{r}
+validate_coad_cancer <- validate(coad_rna_cancer, RAVmodel)
+validate_coad_cancer <- validate_coad_cancer %>% arrange(desc(score))
+
+heatmapTable(validate_coad_cancer, RAVmodel, num.out=10, column_title="COAD Cancer Samples")
+```
+
+```{r}
+validate_hnsc_cancer <- validate(hnsc_rna_cancer, RAVmodel)
+validate_hnsc_cancer <- validate_hnsc_cancer %>% arrange(desc(score))
+
+heatmapTable(validate_hnsc_cancer, RAVmodel, num.out=10, column_title="HNSC Cancer Samples")
+```
+
+```{r}
+validate_lusc_cancer <- validate(lusc_rna_cancer, RAVmodel)
+validate_lusc_cancer <- validate_lusc_cancer %>% arrange(desc(score))
+
+heatmapTable(validate_lusc_cancer, RAVmodel, num.out=10, column_title="LUSC Cancer Samples")
+```
+
+```{r}
+validate_brca_cancer <- validate(brca_rna_cancer, RAVmodel)
+validate_brca_cancer <- validate_brca_cancer %>% arrange(desc(score))
+
+```
+
